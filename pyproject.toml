@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "heejin131", email = "journeyjean131@gmail.com"},
 ]
-dependencies = ["requests>=2.32.3"]
+dependencies = ["requests>=2.32.3", "jupyterlab>=4.3.5", "pandas>=2.2.3", "pyarrow>=19.0.1"]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
