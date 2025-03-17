@@ -45,6 +45,23 @@ def test_save_df():
     assert 'dt' not in read_df.columns
     assert 'dt' in pd.read_parquet(base_path).columns
 
+def test_save_df_url_params():
+    ymd = "20210101"
+    url_params = {"multiMovieYn":"Y"}
+    base_path = "~/temp/movie"
+    
+    data = call_api(dt=ymd, url_param=url_params)
+    df = list2df(data, ymd, url_params)
+    # r = save_df(df, base_path, ['dt', 'multiMovieYn'])
+    r = save_df(df, base_path, ['dt'] + list(url_params.keys()))
+    
+    assert r == f"{base_path}/dt={ymd}/multiMovieYn=Y"
+    print("save_path", r)
+    read_df = pd.read_parquet(r)
+    assert 'dt' not in read_df.columns
+    assert 'dt' in pd.read_parquet(base_path).columns
+
+
 def test_list2df_check_num():
     """df에 숫자 칼럼을 변환 하고 잘 변환 되었는가 확인"""
     # hint : 변환 :df[num_cols].apply(pd.to_numeric)
