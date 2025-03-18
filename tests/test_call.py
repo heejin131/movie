@@ -1,4 +1,4 @@
-from movie.api.call import gen_url, call_api, list2df, save_df
+from movie.api.call import gen_url, call_api, list2df, save_df, fill_na_with_column
 import os
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -77,6 +77,18 @@ def test_list2df_check_num():
         assert df[c].dtype in ['int64', 'float64'], f"{c}가 숫자가 아님"
         assert is_numeric_dtype(df_converted[c])
 
+def test_merge_df():
+    PATH = "~/data/movies/dailyboxoffice/dt=20240101"
+    df = pd.read_parquet(PATH)
+    assert len(df) == 50
 
+    df1 = fill_na_with_column(df, 'multiMovieYn')
+    assert df1["multiMovieYn"].isna().sum() ==5
 
+    df2 = fill_na_with_column(df, 'repNationCd')
+    assert df2["repNationCd"].isna().sum() == 5
+
+    df3 = df2.drop(columns=['rnum', 'rank', 'rankInten', 'salesShare'])
+    unique_df = df3.drop_duplicates(subset='movieCd',keep='first')
+    assert len(unique_df) == 25
 
