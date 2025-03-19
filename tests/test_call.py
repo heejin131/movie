@@ -1,4 +1,4 @@
-from movie.api.call import gen_url, call_api, list2df, save_df, fill_na_with_column
+from movie.api.call import gen_url, call_api, list2df, save_df, fill_na_with_column, gen_unique, re_ranking, merge_save
 import os
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -88,7 +88,16 @@ def test_merge_df():
     df2 = fill_na_with_column(df, 'repNationCd')
     assert df2["repNationCd"].isna().sum() == 5
 
-    df3 = df2.drop(columns=['rnum', 'rank', 'rankInten', 'salesShare'])
-    unique_df = df3.drop_duplicates(subset='movieCd',keep='first')
-    assert len(unique_df) == 25
+    drop_columns=['rnum', 'rank', 'rankInten', 'salesShare']
+    unique_df = gen_unique(df=df2, drop_columns=drop_columns)
+    assert len(unique_df) != 25
 
+    new_ranking_df = re_ranking(unique_df, "20240101")
+    assert new_ranking_df.iloc[0]['movieNm'] == '노량: 죽음의 바다'
+
+def test_merge_save():
+    ds_nodash = '20240101'
+    save_base = '/home/gmlwls5168/temp/merge/dailyboxoffice'
+    save_path = merge_save(ds_nodash, save_base=save_base)
+    assert save_path == f"{save_base}/dt={ds_nodash}"
+    print("Test Passed!")
