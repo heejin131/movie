@@ -73,9 +73,20 @@ def merge_save(ds_nodash, read_base='/home/gmlwls5168/data/movies/dailyboxoffice
     df = pd.read_parquet(base_path)
     df1 = fill_na_with_column(df, 'multiMovieYn')
     df2 = fill_na_with_column(df1, 'repNationCd')
-    
+
     df3 = gen_unique(df2, drop_columns=['rnum', 'rank', 'rankInten', 'salesShare'])
-  
+
     df4 = re_ranking(df3, ds_nodash)
     save_path = save_df(df4, save_base, partitions=['dt'])
     return save_path
+
+def fillna_meta(df1 : pd.DataFrame, df2 : pd.DataFrame):
+    if df1 is None:
+        return df2    
+    df_1 = df1.set_index("movieCd")
+    df_2 = df2.set_index("movieCd")
+    merged_df = df_1.merge(df_2, on="movieCd", how="outer", suffixes=("_A", "_B"))
+    merged_df["multiMovieYn"] = merged_df["multiMovieYn_A"].combine_first(merged_df["multiMovieYn_B"])
+    merged_df["repNationCd"] = merged_df["repNationCd_A"].combine_first(merged_df["repNationCd_B"])
+    meta_df = merged_df.drop(columns=["multiMovieYn_A", "multiMovieYn_B", "repNationCd_A", "repNationCd_B"])
+    return meta_df
