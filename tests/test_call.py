@@ -1,4 +1,4 @@
-from movie.api.call import gen_url, call_api, list2df, save_df
+from movie.api.call import gen_url, call_api, list2df, save_df, fill_na_with_column, gen_unique, re_ranking, merge_save, fillna_meta
 import os
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
@@ -77,6 +77,57 @@ def test_list2df_check_num():
         assert df[c].dtype in ['int64', 'float64'], f"{c}가 숫자가 아님"
         assert is_numeric_dtype(df_converted[c])
 
+def test_merge_df():
+    PATH = "~/data/movies/dailyboxoffice/dt=20240101"
+    df = pd.read_parquet(PATH)
+    assert len(df) == 50
 
+    df1 = fill_na_with_column(df, 'multiMovieYn')
+    assert df1["multiMovieYn"].isna().sum() ==5
 
+    df2 = fill_na_with_column(df, 'repNationCd')
+    assert df2["repNationCd"].isna().sum() == 5
 
+    drop_columns=['rnum', 'rank', 'rankInten', 'salesShare']
+    unique_df = gen_unique(df=df2, drop_columns=drop_columns)
+    assert len(unique_df) != 25
+
+    new_ranking_df = re_ranking(unique_df, "20240101")
+    assert new_ranking_df.iloc[0]['movieNm'] == '노량: 죽음의 바다'
+
+def test_merge_save():
+    ds_nodash = '20240101'
+    save_base = '/home/gmlwls5168/temp/merge/dailyboxoffice'
+    save_path = merge_save(ds_nodash, save_base=save_base)
+    assert save_path == f"{save_base}/dt={ds_nodash}"
+    print("Test Passed!")
+
+def test_fillna_meta():
+    previous_df = pd.DataFrame(
+        {
+            "movieCd": ["1001", "1002", "1003"],
+            "multiMovieYn": ["Y", "Y", "N"],
+            "repNationCd": ["K", "F", None],
+        }
+    )
+    current_df = pd.DataFrame(
+        {
+            "movieCd": ["1001", "1003", "1004"],
+            "multiMovieYn": [None, "Y", "Y"],
+            "repNationCd": [None, "F", "K"],
+        }
+    )
+    r_df = fillna_meta(previous_df, current_df)
+    assert not r_df.isnull().values.any(), "결과 데이터프레임에 NaN 또는 None 값이 있습니다!"
+    
+def test_fillna_meta_none_previous_df():
+    previous_df = None
+    current_df = pd.DataFrame(
+        {
+            "movieCd": ["1001", "1003", "1004"],
+            "multiMovieYn": [None, "Y", "Y"],
+            "repNationCd": [None, "F", "K"],
+        }
+    )
+    r_df = fillna_meta(previous_df, current_df)
+    assert r_df.equals(current_df), "r_df는 current_df와 동일해야 합니다!"
